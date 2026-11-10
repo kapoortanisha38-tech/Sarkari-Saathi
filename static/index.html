@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sarkari Saathi</title>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f1;--ink:#14231f;--muted:#53665f;--teal:#0f6b5c;--saffron:#e8890c;--card:#fff;--line:#c9d6d1}
+@media(prefers-color-scheme:dark){:root{--bg:#10201c;--ink:#e8f1ee;--muted:#9bb2aa;--teal:#4fc3ad;--card:#18302a;--line:#2b4a42}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Mukta,system-ui,sans-serif;line-height:1.55}
+main{max-width:680px;margin:0 auto;padding:32px 20px 64px}
+h1{font-size:clamp(2rem,6vw,3rem);font-weight:800;margin:0 0 4px;letter-spacing:-.02em}
+.sub{color:var(--muted);margin:0 0 28px;font-size:1.1rem}
+.stage{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px;text-align:center}
+.langs{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-bottom:20px}
+.langs button{border:0;background:none;color:var(--ink);padding:6px 18px;font:inherit;cursor:pointer}
+.langs button[aria-pressed=true]{background:var(--teal);color:#fff}
+#mic{width:132px;height:132px;border-radius:50%;border:0;background:var(--saffron);color:#fff;font:600 1rem Mukta;cursor:pointer;box-shadow:0 0 0 0 rgba(232,137,12,.5)}
+#mic.rec{background:#c0392b;animation:p 1.2s infinite}
+#mic:disabled{opacity:.6;cursor:wait}
+@keyframes p{70%{box-shadow:0 0 0 24px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+@media(prefers-reduced-motion:reduce){#mic.rec{animation:none}}
+:focus-visible{outline:3px solid var(--teal);outline-offset:3px}
+#status{min-height:1.6em;margin:16px 0 0;color:var(--muted)}
+#out{margin-top:24px;display:grid;gap:16px}
+.bubble{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.bubble b{display:block;color:var(--muted);font-weight:600;font-size:.9rem;margin-bottom:4px}
+.scheme{border-left:5px solid var(--teal)}
+.scheme h3{margin:0 0 4px;font-size:1.2rem}
+.scheme ul{margin:8px 0 0;padding-left:0;list-style:none}
+.scheme li{padding:2px 0}
+.scheme li::before{content:"\2610  "}
+.err{color:#c0392b}
+</style>
+</head>
+<body>
+<main>
+<h1>Sarkari Saathi</h1>
+<p class="sub">Speak your situation. Get the government schemes meant for you.</p>
+<section class="stage">
+  <div class="langs" role="group" aria-label="Language">
+    <button id="hi" aria-pressed="true">हिन्दी</button>
+    <button id="en" aria-pressed="false">English</button>
+  </div>
+  <div><button id="mic">Tap to speak</button></div>
+  <p id="status" role="status">Try: "Mere paas do bigha zameen hai, mujhe kya madad mil sakti hai?"</p>
+</section>
+<div id="out"></div>
+<p class="sub" style="margin-top:32px;font-size:.9rem">Voice by Gnani Prisma and Timbre.</p>
+</main>
+<script>
+let lang="hi-IN",ctx,stream,proc,src,chunks=[],rate=16000,recording=false;
+const $=id=>document.getElementById(id),mic=$("mic"),statusEl=$("status"),out=$("out");
+for(const [id,l] of [["hi","hi-IN"],["en","en-IN"]])$(id).onclick=()=>{lang=l;$("hi").setAttribute("aria-pressed",l=="hi-IN");$("en").setAttribute("aria-pressed",l=="en-IN")};
+
+function wav(samples,sr){const b=new ArrayBuffer(44+samples.length*2),v=new DataView(b);
+const w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
+w(0,"RIFF");v.setUint32(4,36+samples.length*2,true);w(8,"WAVEfmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,samples.length*2,true);
+samples.forEach((s,i)=>v.setInt16(44+i*2,Math.max(-1,Math.min(1,s))*0x7fff,true));return new Blob([b],{type:"audio/wav"})}
+
+async function start(){
+  stream=await navigator.mediaDevices.getUserMedia({audio:true});
+  ctx=new AudioContext({sampleRate:rate});rate=ctx.sampleRate;chunks=[];
+  src=ctx.createMediaStreamSource(stream);proc=ctx.createScriptProcessor(4096,1,1);
+  proc.onaudioprocess=e=>chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+  src.connect(proc);proc.connect(ctx.destination);
+  recording=true;mic.classList.add("rec");mic.textContent="Listening… tap to stop";statusEl.textContent="";
+}
+async function stop(){
+  recording=false;mic.classList.remove("rec");proc.disconnect();src.disconnect();stream.getTracks().forEach(t=>t.stop());
+  const n=chunks.reduce((a,c)=>a+c.length,0),all=new Float32Array(n);let o=0;chunks.forEach(c=>{all.set(c,o);o+=c.length});
+  const sr=ctx.sampleRate;ctx.close();
+  mic.disabled=true;mic.textContent="Thinking…";statusEl.textContent="Understanding your question";
+  const fd=new FormData();fd.append("audio",wav(all,sr),"speech.wav");fd.append("lang",lang);
+  try{
+    const r=await fetch("/api/ask",{method:"POST",body:fd});
+    const d=await r.json();if(!r.ok)throw new Error(d.detail||"Something went wrong");
+    render(d);
+  }catch(e){statusEl.innerHTML='<span class="err"></span>';statusEl.firstChild.textContent=e.message}
+  mic.disabled=false;mic.textContent="Tap to speak";
+}
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt)e.textContent=txt;return e}
+function render(d){
+  statusEl.textContent="";out.replaceChildren();
+  const q=el("div","bubble");q.append(el("b",0,"You said"),document.createTextNode(d.transcript));
+  const a=el("div","bubble");a.append(el("b",0,"Saathi says"),document.createTextNode(d.answer));
+  out.append(q,a);
+  d.schemes.forEach(s=>{const c=el("div","bubble scheme");c.append(el("h3",0,s.name),el("div",0,s.benefit),el("div",0,"For: "+s.who));
+    const ul=el("ul");s.documents.forEach(x=>ul.append(el("li",0,x)));c.append(el("b",0,"Documents to keep ready"),ul);out.append(c)});
+  const mime=d.mime.startsWith("audio")?d.mime:"audio/wav";
+if(window.cur)window.cur.pause();
+const au=new Audio("data:"+mime+";base64,"+d.audio);window.cur=au;
+const pb=el("button","bubble","⏸ Pause answer");
+pb.style.cssText="cursor:pointer;font:inherit;color:inherit;text-align:left";
+const sync=()=>{pb.textContent=au.paused?"▶ Play answer":"⏸ Pause answer"};
+pb.onclick=()=>{au.paused?au.play():au.pause()};
+au.onplay=sync;au.onpause=sync;au.onended=sync;
+out.append(pb);
+au.play().catch(()=>{sync();statusEl.textContent="Tap Play answer to hear the voice."});
+}
+mic.onclick=()=>{if(window.cur)window.cur.pause();recording?stop():start().catch(()=>statusEl.textContent="Allow microphone access to continue.")};
+</script>
+</body>
+</html>

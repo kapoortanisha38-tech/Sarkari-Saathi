@@ -1,0 +1,12 @@
+[
+{"name":"PM-Kisan Samman Nidhi","who":"Farmers owning cultivable land","benefit":"Rs 6,000 per year in 3 instalments","documents":["Aadhaar","Land records","Bank passbook","Mobile number"]},
+{"name":"Ayushman Bharat (PM-JAY)","who":"Low-income families listed in SECC data","benefit":"Health cover up to Rs 5 lakh per family per year","documents":["Aadhaar","Ration card","Mobile number"]},
+{"name":"PM Ujjwala Yojana","who":"Women from poor households without LPG","benefit":"Free LPG connection","documents":["Aadhaar","Ration card","Bank passbook","Passport photo"]},
+{"name":"PM Awas Yojana","who":"Families without a pucca house","benefit":"Financial help to build a house","documents":["Aadhaar","Income proof","Bank passbook","Land or address proof"]},
+{"name":"Sukanya Samriddhi Yojana","who":"Parents of a girl child under 10","benefit":"High-interest savings account for the girl's education and marriage","documents":["Girl's birth certificate","Parent's Aadhaar","Address proof"]},
+{"name":"PM Matru Vandana Yojana","who":"Pregnant and breastfeeding women (first child)","benefit":"Rs 5,000 in instalments","documents":["Aadhaar","Bank passbook","MCP card"]},
+{"name":"Atal Pension Yojana","who":"Workers aged 18-40 in the unorganised sector","benefit":"Monthly pension of Rs 1,000-5,000 after age 60","documents":["Aadhaar","Bank account","Mobile number"]},
+{"name":"PM Jan Dhan Yojana","who":"Anyone without a bank account","benefit":"Zero-balance account, RuPay card, accident insurance","documents":["Aadhaar","Passport photo"]},
+{"name":"National Scholarship Portal (Post-Matric)","who":"Students from SC/ST/OBC/minority families with low income","benefit":"Scholarship for tuition and living costs","documents":["Aadhaar","Income certificate","Caste certificate","Marksheet","Bank passbook"]},
+{"name":"PM Mudra Yojana","who":"Small business owners and self-employed people","benefit":"Collateral-free loans up to Rs 10 lakh","documents":["Aadhaar","PAN","Business proof","Bank statement"]}
+]
